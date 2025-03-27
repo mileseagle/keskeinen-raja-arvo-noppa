@@ -3,49 +3,47 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
-st.title("🎲 Keskeinen Raja-arvolause - Noppasimulaatio")
+st.title("Keskeinen raja-arvolause: Nopan heittäminen")
 
-# Sidebar for probability selection
-st.sidebar.header("🎛 Säädä Nopan Todennäköisyyksiä")
+st.sidebar.header("Asetukset")
 
-# Initialize probability list
-todennakoisyydet = []
-sum_prob = 0
+# Käyttäjä voi valita heittojen määrän
+heittojen_maara = st.sidebar.slider("Heittojen määrä", 100, 10_000, 1000, 100)
 
-# User selects first 5 probabilities
-for i in range(1, 6):  # P(1) to P(5)
-    max_val = 1 - sum_prob  # Ensure sum never exceeds 1
-    max_val = 1.0  # Ensure max_val is always properly set
-    prob = st.sidebar.slider(f"P({i})", 0.0, max_val, max_val / 6, 0.01)
-    todennakoisyydet.append(prob)
-    sum_prob += prob
+# Käyttäjä voi säätää noppalukujen todennäköisyyksiä
+st.sidebar.subheader("Nopan todennäköisyydet")
 
-# The last probability is auto-adjusted
-todennakoisyydet.append(1 - sum_prob)
+# Käyttäjän syöttämät todennäköisyydet
+probabilities = np.array([
+    st.sidebar.slider(f"P({i})", 0.0, 1.0, 1.0 / 6, 0.01) for i in range(1, 7)
+])
 
-st.sidebar.write(f"**P(6) automaattisesti:** {todennakoisyydet[-1]:.2f}")
+# Normalisoidaan todennäköisyydet niin, että niiden summa on aina 1
+probabilities = probabilities / probabilities.sum()
 
-# User selects number of dice rolls
-heittojen_maara = st.slider("🔄 Nopan Heitot", 10, 5000, 1000, 10)
+# Simuloidaan nopanheittoja
+otokset = np.random.choice([1, 2, 3, 4, 5, 6], size=(heittojen_maara, 100), p=probabilities)
 
-# Simulate dice rolls
-otokset = np.random.choice([1, 2, 3, 4, 5, 6], size=(heittojen_maara, 100), p=todennakoisyydet)
+# Lasketaan keskiarvot jokaisesta 100 kokeesta
+keskiarvot = np.mean(otokset, axis=1)
 
-# Calculate sample means
-otosten_keskiarvot = otokset.mean(axis=1)
+# Piirretään histogrammi keskiarvoista
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.hist(keskiarvot, bins=30, density=True, alpha=0.6, color="blue", edgecolor="black")
 
-# Plot histogram
-fig, ax = plt.subplots()
-ax.hist(otosten_keskiarvot, bins=30, density=True, alpha=0.5, color='blue', label="Histogrammi")
+# Sovitetaan normaalijakauma päälle
+mu, sigma = np.mean(keskiarvot), np.std(keskiarvot)
+x = np.linspace(min(keskiarvot), max(keskiarvot), 100)
+ax.plot(x, stats.norm.pdf(x, mu, sigma), "r-", label="Normaalijakauma")
 
-# Add smooth KDE curve
-kde = stats.gaussian_kde(otosten_keskiarvot)
-x_vals = np.linspace(min(otosten_keskiarvot), max(otosten_keskiarvot), 200)
-ax.plot(x_vals, kde(x_vals), color='red', linewidth=2, label="KDE (pehmennetty)")
-
-ax.set_title("Otosten Keskiarvojakauma")
+ax.set_title("Keskiarvojen jakauma (Nopanheitto)")
 ax.set_xlabel("Keskiarvo")
 ax.set_ylabel("Tiheys")
 ax.legend()
+
 st.pyplot(fig)
 
+st.write("""
+Tämä sovellus havainnollistaa **keskeistä raja-arvolausetta** (Central Limit Theorem, CLT) käyttämällä **nopanheittoa**.
+Kun otoskoko kasvaa, **keskiarvojen jakauma lähestyy normaalijakaumaa**, vaikka alkuperäinen jakauma (nopanheitto) ei olisi normaali.
+""")
