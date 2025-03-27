@@ -10,16 +10,20 @@ st.sidebar.header("Asetukset")
 # Käyttäjä voi valita heittojen määrän
 heittojen_maara = st.sidebar.slider("Heittojen määrä", 100, 10_000, 1000, 100)
 
-# Käyttäjä voi säätää noppalukujen todennäköisyyksiä
 st.sidebar.subheader("Nopan todennäköisyydet")
 
 # Käyttäjän syöttämät todennäköisyydet
-probabilities = np.array([
-    st.sidebar.slider(f"P({i})", 0.0, 1.0, 1.0 / 6, 0.01) for i in range(1, 7)
-])
+probabilities = [0] * 6
+remaining_prob = 1.0
 
-# Normalisoidaan todennäköisyydet niin, että niiden summa on aina 1
-probabilities = probabilities / probabilities.sum()
+for i in range(5):  # Käyttäjä säätää vain ensimmäiset 5 todennäköisyyttä
+    max_val = min(1.0, remaining_prob)  # Varmistetaan, ettei summaa yli 1.0
+    probabilities[i] = st.sidebar.slider(f"P({i+1})", 0.0, max_val, max_val / 2, 0.01)
+    remaining_prob -= probabilities[i]
+
+# Viimeinen todennäköisyys lasketaan automaattisesti niin, että summa on 1
+probabilities[5] = max(0.0, remaining_prob)
+st.sidebar.write(f"P(6) (automaattisesti): {probabilities[5]:.2f}")
 
 # Simuloidaan nopanheittoja
 otokset = np.random.choice([1, 2, 3, 4, 5, 6], size=(heittojen_maara, 100), p=probabilities)
