@@ -32,15 +32,12 @@ def normalize_probs(idx, new_value):
     
     st.session_state.probs[idx] = new_value
 
-# Luo liukusäätimet, joiden summa on aina 1
+# Luo liukusäätimet, joiden summa on aina 1, ja näytetään todennäköisyys vieressä
 for i in range(6):
-    new_value = st.sidebar.slider(f"P({i+1})", 0.0, 1.0, st.session_state.probs[i], 0.01)
+    cols = st.sidebar.columns([4, 1])  # Jako kahteen: liukusäädin (4) ja luku (1)
+    new_value = cols[0].slider(f"P({i+1})", 0.0, 1.0, st.session_state.probs[i], 0.01)
     normalize_probs(i, new_value)
-
-# Näytetään normalisoidut todennäköisyydet
-st.sidebar.write("Todennäköisyydet:")
-for i in range(6):
-    st.sidebar.write(f"P({i+1}) = {st.session_state.probs[i]:.2f}")
+    cols[1].write(f"{st.session_state.probs[i]:.2f}")  # Näytetään arvo suoraan liukusäätimen vieressä
 
 # Simuloidaan nopanheittoja
 otokset = np.random.choice([1, 2, 3, 4, 5, 6], size=(heittojen_maara, 100), p=st.session_state.probs)
