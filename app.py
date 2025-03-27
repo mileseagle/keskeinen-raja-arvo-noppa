@@ -15,7 +15,8 @@ sum_prob = 0
 # User selects first 5 probabilities
 for i in range(1, 6):  # P(1) to P(5)
     max_val = 1 - sum_prob  # Ensure sum never exceeds 1
-    prob = st.sidebar.slider(f"P({i})", 0.0, max_val, max_val / 2, 0.01)
+    max_val = 1.0  # Ensure max_val is always properly set
+    prob = st.sidebar.slider(f"P({i})", 0.0, max_val, max_val / 6, 0.01)
     todennakoisyydet.append(prob)
     sum_prob += prob
 
