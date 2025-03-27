@@ -12,18 +12,20 @@ heittojen_maara = st.sidebar.slider("Heittojen määrä", 100, 10_000, 1000, 100
 
 st.sidebar.subheader("Nopan todennäköisyydet")
 
-# Lista todennäköisyyksille
-todennakoisyydet = [0] * 6
-jäljellä_oleva = 1.0  # Kokonaissumma pitää olla 1
+# Tallennetaan käyttäjän syöttämät alkuperäiset arvot
+raw_probs = [st.sidebar.slider(f"P({i+1})", 0.0, 1.0, 1/6, 0.01) for i in range(6)]
 
-for i in range(5):  # Käyttäjä voi säätää ensimmäiset 5 todennäköisyyttä
-    max_arvo = min(1.0, jäljellä_oleva)  # Ei voi mennä yli 1
-    todennakoisyydet[i] = st.sidebar.slider(f"P({i+1})", 0.0, max_arvo, 0.01, 0.01)
-    jäljellä_oleva -= todennakoisyydet[i]  # Päivitetään jäljellä oleva osuus
+# Skaalataan niin, että summa pysyy 1:n sisällä
+sum_probs = sum(raw_probs)
+if sum_probs > 0:
+    todennakoisyydet = [p / sum_probs for p in raw_probs]  # Normalisoidaan
+else:
+    todennakoisyydet = [1/6] * 6  # Jos kaikki ovat nollia, käytetään tasajakaumaa
 
-# Viimeinen todennäköisyys asetetaan automaattisesti
-todennakoisyydet[5] = max(0.0, jäljellä_oleva)
-st.sidebar.write(f"P(6) (automaattisesti asetettu): {todennakoisyydet[5]:.2f}")
+# Näytetään lopulliset skaalatut todennäköisyydet
+st.sidebar.write("Todennäköisyydet normalisoituna:")
+for i in range(6):
+    st.sidebar.write(f"P({i+1}) = {todennakoisyydet[i]:.2f}")
 
 # Simuloidaan nopanheittoja
 otokset = np.random.choice([1, 2, 3, 4, 5, 6], size=(heittojen_maara, 100), p=todennakoisyydet)
