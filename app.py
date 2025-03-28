@@ -3,45 +3,52 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
-# Title
-st.title("Keskeinen Raja-arvolause: Noppasimulaatio")
+st.title("Keskeinen raja-arvo ja noppa")
 
-# Sidebar controls
-st.sidebar.header("Säädä todennäköisyydet")
+st.sidebar.header("Asetukset")
+
+# Sliders for dice probabilities
 probabilities = []
-remaining_prob = 1.0
+remaining_probability = 1.0
 
 for i in range(6):
-    max_val = remaining_prob if i < 5 else remaining_prob
-    p = st.sidebar.slider(f"P({i+1})", 0.0, 1.0, max_val / 2, 0.01)
-    probabilities.append(p)
-    remaining_prob -= p
+    max_val = remaining_probability if i < 5 else remaining_probability
+    prob = st.sidebar.slider(f"P({i+1})", 0.0, 1.0, max_val / 6, 0.01)
+    probabilities.append(prob)
+    remaining_probability -= prob
 
-# Ensure probabilities sum to 1 (adjust last value)
-probabilities[-1] += remaining_prob
+todennakoisyydet = np.array(probabilities)
 
-# Number of dice rolls
+# Ensure probabilities sum to 1
+if not np.isclose(sum(todennakoisyydet), 1.0):
+    st.sidebar.error("Todennäköisyyksien summan tulee olla 1.0!")
+    st.stop()
+
+# Number of throws
 n = st.slider("Heittojen lukumäärä (n)", 1, 100, 30)
+heittojen_maara = 1000  # Number of simulations
 
-# Simulation: 1000 repetitions
-samples = np.random.choice([1, 2, 3, 4, 5, 6], size=(1000, n), p=probabilities)
-sample_means = samples.mean(axis=1)
+# Simulating dice rolls
+otoskeskiarvot = []
+for _ in range(heittojen_maara):
+    heitot = np.random.choice([1, 2, 3, 4, 5, 6], size=n, p=todennakoisyydet)
+    otoskeskiarvot.append(np.mean(heitot))
 
 # Plot histogram
 fig, ax = plt.subplots()
-ax.hist(sample_means, bins=30, density=True, alpha=0.6, color='b', label="Simuloitu keskiarvojakauma")
+ax.hist(otoskeskiarvot, bins=20, density=True, alpha=0.6, color='b', label="Otosten keskiarvot")
 
-# Overlay normal distribution
-mu, sigma = np.mean(sample_means), np.std(sample_means)
-x = np.linspace(min(sample_means), max(sample_means), 100)
-ax.plot(x, stats.norm.pdf(x, mu, sigma), 'r-', label="Normaalijakauma")
+# Normal distribution for comparison
+mu = np.dot([1, 2, 3, 4, 5, 6], todennakoisyydet)
+sigma = np.sqrt(np.dot((np.array([1, 2, 3, 4, 5, 6]) - mu) ** 2, todennakoisyydet))
+X = np.linspace(min(otoskeskiarvot), max(otoskeskiarvot), 1000)
+normal_dist = stats.norm.pdf(X, mu, sigma / np.sqrt(n))
+ax.plot(X, normal_dist, 'r', lw=2, label="Normaalijakauma")
 
 ax.set_xlabel("Keskiarvo")
 ax.set_ylabel("Tiheys")
 ax.legend()
 st.pyplot(fig)
 
-# Explanation at the bottom
-st.markdown(
-    "**Huom:** Tämä simulaatio toistetaan 1000 kertaa. Kun n kasvaa, jakauma lähestyy normaalijakaumaa keskeisen raja-arvolauseen mukaan."
-)
+# Explanation text
+st.write("Simulaatio suoritetaan 1000 kertaa jokaisella valitulla heittojen lukumäärällä n.")
