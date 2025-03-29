@@ -3,44 +3,46 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
-st.title("Keskeinen raja-arvo ja noppa - Simulaatiot")
+st.title("Keskeinen raja-arvo ja noppa")
 
-st.sidebar.header("Valitse todennäköisyydet")
+st.sidebar.header("Asetukset")
 
-# Käyttäjä valitsee todennäköisyydet
+# Alustetaan todennäköisyydet
 probabilities = []
 remaining = 1.0
 for i in range(6):
-    if i == 5:
-        probabilities.append(remaining)
-    else:
-        prob = st.sidebar.slider(f"P({i+1})", 0.0, remaining, remaining / (6 - i), 0.01)
+    if i < 5:
+        prob = st.sidebar.slider(f"P({i+1})", 0.0, remaining, remaining / (6 - i))
         probabilities.append(prob)
         remaining -= prob
+    else:
+        probabilities.append(remaining)
 
-toistoja = st.sidebar.slider("Heittojen lukumäärä (n)", 1, 100, 10)
+st.sidebar.write("Todennäköisyyksien summan tulee olla 1.0.")
 
-# Simulaatioiden lukumäärä
-simulaatioita = 1000
+# Heittojen määrä
+n = st.sidebar.slider("Nopan heittojen määrä (n)", 1, 1000, 100)
 
-# Suoritetaan simulaatiot
-samples = np.random.choice([1, 2, 3, 4, 5, 6], size=(simulaatioita, toistoja), p=probabilities)
-means = samples.mean(axis=1)
+# Simulaatioiden määrä
+num_simulations = 1000
+st.sidebar.write(f"Jokaiselle n:lle suoritetaan {num_simulations} simulaatiota.")
 
-# Histogrammi
+# Simuloidaan satunnaismuuttujien summia
+samples = np.random.choice([1, 2, 3, 4, 5, 6], size=(num_simulations, n), p=probabilities)
+sample_means = samples.mean(axis=1)
+
+# Piirretään histogrammi
 fig, ax = plt.subplots()
-ax.hist(means, bins=30, density=True, alpha=0.6, color='b', label="Simuloidut keskiarvot")
+ax.hist(sample_means, bins=30, density=True, alpha=0.7, color="blue", edgecolor="black")
 
-# Normaalijakauman tiheysfunktio
-mu = np.mean(means)
-sigma = np.std(means)
-x = np.linspace(min(means), max(means), 100)
-y = stats.norm.pdf(x, mu, sigma)
-ax.plot(x, y, 'r-', label="Normaalijakauma")
+# Normaalijakauman sovitus
+mu, sigma = np.mean(sample_means), np.std(sample_means, ddof=1)
+x = np.linspace(min(sample_means), max(sample_means), 100)
+pdf = stats.norm.pdf(x, mu, sigma)
+ax.plot(x, pdf, "r-", label="Normaalijakauma")
 
 ax.set_xlabel("Keskiarvo")
 ax.set_ylabel("Tiheys")
 ax.legend()
-st.pyplot(fig)
 
-st.write("Simulaatio toistetaan 1000 kertaa.")
+st.pyplot(fig)
