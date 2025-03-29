@@ -12,9 +12,10 @@ probabilities = []
 remaining = 1.0
 for i in range(6):
     if i < 5:
-        prob = st.sidebar.slider(f"P({i+1})", 0.0, remaining, remaining / (6 - i))
-        probabilities.append(prob)
-        remaining -= prob
+        prob = st.sidebar.slider(f"P({i+1})", 0.0, 1.0, remaining / (6 - i))
+        adjusted_prob = min(prob, remaining)  # Varmistetaan, ettei ylitä 1.0:n summaa
+        probabilities.append(adjusted_prob)
+        remaining -= adjusted_prob
     else:
         probabilities.append(remaining)
 
